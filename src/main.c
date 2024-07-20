@@ -32,7 +32,7 @@ void GameShutdown();
 void GameStartup() {
     InitAudioDevice();
 
-    Image img = LoadImage('resources/colored_tilemap.png');
+    Image img = LoadImage("resources/colored_tilemap_packed.png");
     textures[TEXTURE_TILEMAP] = LoadTextureFromImage(img);
     UnloadImage(img);
 
@@ -52,10 +52,19 @@ void GameStartup() {
 }
 
 void GameUpdate() {
-
+    float wheel = GetMouseWheelMove();
+    if (wheel != 0) {
+        const float zoomIncrement = 0.125f;
+        camera.zoom += (wheel * zoomIncrement);
+        if (camera.zoom < 3.0f) camera.zoom = 3.0f;
+        if (camera.zoom > 8.0f) camera.zoom = 8.0f;
+    }
+    camera.target = (Vector2) { 0, 0 };
 }
 
 void GameRender() {
+    //Enables game to use camera settings defined
+    BeginMode2D(camera);
     sTile tile;
     int textureIndex_x = 0;
     int textureIndex_y = 0;
@@ -67,12 +76,35 @@ void GameRender() {
             textureIndex_x = 4;
             textureIndex_y = 4;
 
-            Rectangle source = { (float) textureIndex_x, (float) textureIndex_y, (float) TILE_WIDTH, (float) TILE_HEIGHT };
-            Rectangle dest = { (float) (tile.x * TILE_WIDTH), (float) (tile.y * TILE_HEIGHT), (float) TILE_WIDTH, (float) TILE_HEIGHT };
+            Rectangle source = { 
+                (float) textureIndex_x * TILE_WIDTH, 
+                (float) textureIndex_y * TILE_HEIGHT, 
+                (float) TILE_WIDTH, 
+                (float) TILE_HEIGHT 
+                };
+            Rectangle dest = { 
+                (float) (tile.x * TILE_WIDTH), 
+                (float) (tile.y * TILE_HEIGHT), 
+                (float) TILE_WIDTH, 
+                (float) TILE_HEIGHT 
+                };
             Vector2 origin = { 0, 0 };
-            DrawTexturePro(textures[TEXTURE_TILEMAP], source, dest, origin, 0.0f, WHITE);
+            DrawTexturePro(
+                textures[TEXTURE_TILEMAP],
+                source, 
+                dest, 
+                origin,
+                0.0f, 
+                WHITE);
         }
     }
+    EndMode2D();
+
+    DrawRectangle(5, 5, 330, 120, Fade(SKYBLUE, 0.5f));
+    DrawRectangleLines(5, 5, 330, 120, BLUE);
+
+    DrawText(TextFormat("Camera Target: (%06.2f, %06.2f)", camera.target.x, camera.target.y), 15, 10, 14, YELLOW);
+    DrawText(TextFormat("Camera Zoom: %06.2f", camera.zoom), 15, 30, 14, YELLOW);
 }
 
 void GameShutdown() {
