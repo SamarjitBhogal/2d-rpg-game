@@ -7,6 +7,17 @@
 #define WORLD_WIDTH 20
 #define WORLD_HEIGHT 20
 
+#define PLAYER_TEXTURE_X 4
+#define PLAYER_TEXTURE_Y 0
+#define DUNGEON_TEXTURE_X 8
+#define DUNGEON_TEXTURE_Y 9
+
+#define PLAYER_START_X 3
+#define PLAYER_START_Y 3
+
+#define DUNGEON_GATE_X 10
+#define DUNGEON_GATE_Y 10
+
 const int screenWidth = 800;
 const int screenHeight = 600;
 
@@ -34,15 +45,10 @@ typedef struct {
 
 Texture2D textures[MAX_TEXTURES];
 sTile world[WORLD_WIDTH][WORLD_HEIGHT];
-sTile playerTexture = (sTile) {
-    .x = 4,
-    .y = 0
-};
-sTile grassTexture = (sTile) {
-    .x = 4,
-    .y = 4
-};
+sTile dungeon[WORLD_WIDTH][WORLD_HEIGHT];
+
 sEntity player;
+sEntity dun_gate;
 
 Camera2D camera = {};
 
@@ -66,12 +72,23 @@ void GameStartup() {
                 .y = j,
                 .type = GetRandomValue(TILE_DIRT, TILE_TREE)
             };
+
+            dungeon[i][j] = (sTile) {
+                .x = i,
+                .y = j,
+                .type = TILE_DIRT
+            };
         }
     }
 
     player = (sEntity) {
-        .x = TILE_WIDTH * 3,
-        .y = TILE_HEIGHT * 3
+        .x = TILE_WIDTH * PLAYER_START_X,
+        .y = TILE_HEIGHT * PLAYER_START_Y
+    };
+
+    dun_gate = (sEntity) {
+        .x = TILE_WIDTH * DUNGEON_GATE_X,
+        .y = TILE_HEIGHT * DUNGEON_GATE_Y
     };
 
     camera.target = (Vector2) { player.x, player.y };
@@ -106,6 +123,12 @@ void GameUpdate() {
     }  
 
     camera.target = (Vector2) { player.x, player.y };
+
+    if (IsKeyPressed(KEY_E)) {
+        if (player.x == dun_gate.x && player.y == dun_gate.y) {
+            
+        }
+    }
 }
 
 void GameRender() {
@@ -141,8 +164,11 @@ void GameRender() {
 
             DrawTile(tile.x * TILE_WIDTH, tile.y * TILE_HEIGHT, texture_tile.x, texture_tile.y);
         }
-    }
-    DrawTile(camera.target.x, camera.target.y, playerTexture.x, playerTexture.y);
+    }    
+    //render dungeon gate
+    DrawTile(dun_gate.x, dun_gate.y, DUNGEON_TEXTURE_X, DUNGEON_TEXTURE_Y);
+    //render player
+    DrawTile(camera.target.x, camera.target.y, PLAYER_TEXTURE_X, PLAYER_TEXTURE_Y);
 
     EndMode2D();
 
