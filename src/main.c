@@ -13,6 +13,8 @@
 #define DUNGEON_TEXTURE_Y 9
 #define ORC_TEXTURE_X 11
 #define ORC_TEXTURE_Y 0
+#define CHEST_TEXTURE_X 9
+#define CHEST_TEXTURE_Y 3
 
 #define PLAYER_START_X 3
 #define PLAYER_START_Y 3
@@ -55,6 +57,8 @@ typedef struct {
     int health;
     int damage;
     bool isAlive;
+    int money;
+    int xp;
 } sEntity;
 
 Texture2D textures[MAX_TEXTURES];
@@ -64,6 +68,7 @@ sTile dungeon[WORLD_WIDTH][WORLD_HEIGHT];
 sEntity player;
 sEntity dun_gate;
 sEntity orc;
+sEntity chest = { 0 };
 
 Camera2D camera = {};
 
@@ -102,7 +107,9 @@ void GameStartup() {
         .zone = ZONE_WORLD,
         .health = 100,
         .damage = 0,
-        .isAlive = true
+        .isAlive = true,
+        .money = 1000,
+        .xp = 0
     };
 
     dun_gate = (sEntity) {
@@ -117,7 +124,8 @@ void GameStartup() {
         .zone = ZONE_DUN,
         .health = 100,
         .damage = 0,
-        .isAlive = true
+        .isAlive = true,
+        .xp = GetRandomValue(10, 100)
     };
 
     camera.target = (Vector2) { player.x, player.y };
@@ -130,7 +138,7 @@ void GameUpdate() {
 
     float x = player.x;
     float y = player.y;
-    if (IsKeyPressed(KEY_LEFT) || IsKeyPressed(KEY_A)) {
+    if (IsKeyPressed(KEY_LEFT) || IsKeyPressed(KEY_A)) {        
         x -= 1 * TILE_WIDTH;
     } else if (IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_D)) {
         x += 1 * TILE_WIDTH;
@@ -158,18 +166,33 @@ void GameUpdate() {
         }
     }
 
-    if (player.zone == orc.zone && orc.x == x && orc.y == y) {
+    if (player.zone == orc.zone && orc.x == x && orc.y == y && orc.isAlive) {
         int damage = GetRandomValue(2, 20); //2d10 dice
         orc.health -= damage;
         orc.damage = damage;
 
         if (orc.health <= 0) {
             orc.isAlive = false;
+            player.xp += orc.xp;
+
+            chest.isAlive = true;
+            chest.x = orc.x;
+            chest.y = orc.y;
+            chest.zone = orc.zone;
+            chest.money = GetRandomValue(10, 100);
         }
     } else {
         player.x = x;
         player.y = y;
         camera.target = (Vector2) { player.x, player.y };
+    }
+
+    if (IsKeyPressed(KEY_G)) {
+        if (player.x == chest.x && player.y == chest.y && !orc.isAlive) {
+            chest.isAlive = false;
+            player.money += chest.money;
+            
+        }
     }
 }
 
@@ -214,8 +237,9 @@ void GameRender() {
     //render dungeon gate
     DrawTile(dun_gate.x, dun_gate.y, DUNGEON_TEXTURE_X, DUNGEON_TEXTURE_Y);
     //render orc
-    if (orc.zone == player.zone && orc.isAlive) {
-        DrawTile(orc.x, orc.y, ORC_TEXTURE_X, ORC_TEXTURE_Y);
+    if (orc.zone == player.zone) {
+        if (orc.isAlive) DrawTile(orc.x, orc.y, ORC_TEXTURE_X, ORC_TEXTURE_Y);
+        if (chest.isAlive) DrawTile(chest.x, chest.y, CHEST_TEXTURE_X, CHEST_TEXTURE_Y);
     }
     //render player
     DrawTile(camera.target.x, camera.target.y, PLAYER_TEXTURE_X, PLAYER_TEXTURE_Y);
@@ -227,7 +251,9 @@ void GameRender() {
 
     DrawText(TextFormat("Camera Target: (%06.2f, %06.2f)", camera.target.x, camera.target.y), 15, 10, 14, YELLOW);
     DrawText(TextFormat("Camera Zoom: %06.2f", camera.zoom), 15, 30, 14, YELLOW);
-    DrawText(TextFormat("Player Health: %d", player.health), 15, 30, 14, YELLOW);
+    DrawText(TextFormat("Player Health: %d", player.health), 15, 50, 14, YELLOW);
+    DrawText(TextFormat("Player Money: %d", player.money), 15, 70, 14, YELLOW);
+    DrawText(TextFormat("Player XP: %d", player.xp), 15, 90, 14, YELLOW);
 
     if (orc.isAlive) {
         DrawText(TextFormat("Orc Health: %d", orc.health), 15, 110, 14, YELLOW);
