@@ -33,7 +33,7 @@ void GameStartup();
 void GameUpdate();
 void GameRender();
 void GameShutdown();
-void DrawTile(int x_pos, int y_pos, int tile_x, int tile_y);
+void DrawTile(int x_pos, int y_pos, int texture_tile_x, int texture_tile_y);
 
 void GameStartup() {
     InitAudioDevice();
@@ -109,10 +109,10 @@ void GameShutdown() {
     }
 }
 
-void DrawTile(int x_pos, int y_pos, int tile_x, int tile_y) {
+void DrawTile(int x_pos, int y_pos, int texture_tile_x, int texture_tile_y) {
     Rectangle source = { 
-        (float) (tile_x * TILE_WIDTH), 
-        (float) (tile_y * TILE_HEIGHT), 
+        (float) (texture_tile_x * TILE_WIDTH), 
+        (float) (texture_tile_y * TILE_HEIGHT), 
         (float) TILE_WIDTH, 
         (float) TILE_HEIGHT 
         };
