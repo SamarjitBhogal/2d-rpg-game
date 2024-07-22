@@ -52,6 +52,9 @@ typedef struct {
     int x;
     int y;
     zone zone;
+    int health;
+    int damage;
+    bool isAlive;
 } sEntity;
 
 Texture2D textures[MAX_TEXTURES];
@@ -96,7 +99,10 @@ void GameStartup() {
     player = (sEntity) {
         .x = TILE_WIDTH * PLAYER_START_X,
         .y = TILE_HEIGHT * PLAYER_START_Y,
-        .zone = ZONE_WORLD
+        .zone = ZONE_WORLD,
+        .health = 100,
+        .damage = 0,
+        .isAlive = true
     };
 
     dun_gate = (sEntity) {
@@ -108,7 +114,10 @@ void GameStartup() {
     orc = (sEntity) {
         .x = TILE_WIDTH * ORC_START_X,
         .y = TILE_HEIGHT * ORC_START_Y,
-        .zone = ZONE_DUN
+        .zone = ZONE_DUN,
+        .health = 100,
+        .damage = 0,
+        .isAlive = true
     };
 
     camera.target = (Vector2) { player.x, player.y };
@@ -131,9 +140,6 @@ void GameUpdate() {
         y += 1 * TILE_HEIGHT;
     }
 
-    player.x = x;
-    player.y = y;
-
     float wheel = GetMouseWheelMove();
     if (wheel != 0) {
         const float zoomIncrement = 0.125f;
@@ -141,8 +147,6 @@ void GameUpdate() {
         if (camera.zoom < 3.0f) camera.zoom = 3.0f;
         if (camera.zoom > 8.0f) camera.zoom = 8.0f;
     }  
-
-    camera.target = (Vector2) { player.x, player.y };
 
     if (IsKeyPressed(KEY_E)) {
         if (player.x == dun_gate.x && player.y == dun_gate.y) {
@@ -154,7 +158,19 @@ void GameUpdate() {
         }
     }
 
-    
+    if (player.zone == orc.zone && orc.x == x && orc.y == y) {
+        int damage = GetRandomValue(2, 20); //2d10 dice
+        orc.health -= damage;
+        orc.damage = damage;
+
+        if (orc.health <= 0) {
+            orc.isAlive = false;
+        }
+    } else {
+        player.x = x;
+        player.y = y;
+        camera.target = (Vector2) { player.x, player.y };
+    }
 }
 
 void GameRender() {
@@ -198,7 +214,7 @@ void GameRender() {
     //render dungeon gate
     DrawTile(dun_gate.x, dun_gate.y, DUNGEON_TEXTURE_X, DUNGEON_TEXTURE_Y);
     //render orc
-    if (orc.zone == player.zone) {
+    if (orc.zone == player.zone && orc.isAlive) {
         DrawTile(orc.x, orc.y, ORC_TEXTURE_X, ORC_TEXTURE_Y);
     }
     //render player
@@ -211,6 +227,11 @@ void GameRender() {
 
     DrawText(TextFormat("Camera Target: (%06.2f, %06.2f)", camera.target.x, camera.target.y), 15, 10, 14, YELLOW);
     DrawText(TextFormat("Camera Zoom: %06.2f", camera.zoom), 15, 30, 14, YELLOW);
+    DrawText(TextFormat("Player Health: %d", player.health), 15, 30, 14, YELLOW);
+
+    if (orc.isAlive) {
+        DrawText(TextFormat("Orc Health: %d", orc.health), 15, 110, 14, YELLOW);
+    }
 }
 
 void GameShutdown() {
