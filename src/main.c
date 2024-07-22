@@ -17,10 +17,15 @@ typedef enum {
 typedef struct {
     int x;
     int y;
-} sTile;
+} sTile, sEntity;
 
 Texture2D textures[MAX_TEXTURES];
 sTile world[WORLD_WIDTH][WORLD_HEIGHT];
+sEntity player;
+sTile playerTexture = (sTile) {
+    .x = 4,
+    .y = 0
+};
 
 Camera2D camera = {};
 
@@ -28,6 +33,7 @@ void GameStartup();
 void GameUpdate();
 void GameRender();
 void GameShutdown();
+void DrawTile(int x_pos, int y_pos, int tile_x, int tile_y);
 
 void GameStartup() {
     InitAudioDevice();
@@ -45,7 +51,12 @@ void GameStartup() {
         }
     }
 
-    camera.target = (Vector2) { 0, 0 };
+    player = (sEntity) {
+        .x = TILE_WIDTH * 3,
+        .y = TILE_HEIGHT * 3
+    };
+
+    camera.target = (Vector2) { player.x, player.y };
     camera.offset = (Vector2) { (float) screenWidth / 2, (float) screenHeight / 2 };
     camera.rotation = 0.0f;
     camera.zoom = 3.0f;
@@ -59,7 +70,7 @@ void GameUpdate() {
         if (camera.zoom < 3.0f) camera.zoom = 3.0f;
         if (camera.zoom > 8.0f) camera.zoom = 8.0f;
     }
-    camera.target = (Vector2) { 0, 0 };
+    camera.target = (Vector2) { player.x, player.y };
 }
 
 void GameRender() {
@@ -76,28 +87,11 @@ void GameRender() {
             textureIndex_x = 4;
             textureIndex_y = 4;
 
-            Rectangle source = { 
-                (float) textureIndex_x * TILE_WIDTH, 
-                (float) textureIndex_y * TILE_HEIGHT, 
-                (float) TILE_WIDTH, 
-                (float) TILE_HEIGHT 
-                };
-            Rectangle dest = { 
-                (float) (tile.x * TILE_WIDTH), 
-                (float) (tile.y * TILE_HEIGHT), 
-                (float) TILE_WIDTH, 
-                (float) TILE_HEIGHT 
-                };
-            Vector2 origin = { 0, 0 };
-            DrawTexturePro(
-                textures[TEXTURE_TILEMAP],
-                source, 
-                dest, 
-                origin,
-                0.0f, 
-                WHITE);
+            DrawTile(tile.x * TILE_WIDTH, tile.y * TILE_HEIGHT, textureIndex_x, textureIndex_y);
         }
     }
+    DrawTile(camera.target.x, camera.target.y, playerTexture.x, playerTexture.y);
+
     EndMode2D();
 
     DrawRectangle(5, 5, 330, 120, Fade(SKYBLUE, 0.5f));
@@ -113,7 +107,30 @@ void GameShutdown() {
     for (int i = 0; i < MAX_TEXTURES; i++) {
         UnloadTexture(textures[i]);
     }
-}   
+}
+
+void DrawTile(int x_pos, int y_pos, int tile_x, int tile_y) {
+    Rectangle source = { 
+        (float) (tile_x * TILE_WIDTH), 
+        (float) (tile_y * TILE_HEIGHT), 
+        (float) TILE_WIDTH, 
+        (float) TILE_HEIGHT 
+        };
+    Rectangle dest = { 
+        (float) x_pos, 
+        (float) y_pos, 
+        (float) TILE_WIDTH, 
+        (float) TILE_HEIGHT
+        };
+    Vector2 origin = { 0, 0 };
+    DrawTexturePro(
+        textures[TEXTURE_TILEMAP],
+        source, 
+        dest, 
+        origin,
+        0.0f, 
+        WHITE);
+}
 
 int main() {
     InitWindow(screenWidth, screenHeight, "Raylib 2D RPG");
