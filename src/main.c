@@ -14,18 +14,35 @@ typedef enum {
     TEXTURE_TILEMAP = 0
 } texture_asset;
 
+typedef enum {
+    TILE_DIRT = 0,
+    TILE_GRASS,
+    TILE_TREE,
+    TILE_STONE,
+} tile_type;
+
 typedef struct {
     int x;
     int y;
-} sTile, sEntity;
+    int type;
+} sTile;
+
+typedef struct {
+    int x;
+    int y;
+} sEntity;
 
 Texture2D textures[MAX_TEXTURES];
 sTile world[WORLD_WIDTH][WORLD_HEIGHT];
-sEntity player;
 sTile playerTexture = (sTile) {
     .x = 4,
     .y = 0
 };
+sTile grassTexture = (sTile) {
+    .x = 4,
+    .y = 4
+};
+sEntity player;
 
 Camera2D camera = {};
 
@@ -47,6 +64,7 @@ void GameStartup() {
             world[i][j] = (sTile) {
                 .x = i,
                 .y = j,
+                .type = GetRandomValue(TILE_DIRT, TILE_TREE)
             };
         }
     }
@@ -63,13 +81,30 @@ void GameStartup() {
 }
 
 void GameUpdate() {
+
+    float x = player.x;
+    float y = player.y;
+    if (IsKeyPressed(KEY_LEFT) || IsKeyPressed(KEY_A)) {
+        x -= 1 * TILE_WIDTH;
+    } else if (IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_D)) {
+        x += 1 * TILE_WIDTH;
+    } else if (IsKeyPressed(KEY_UP) || IsKeyPressed(KEY_W)) {
+        y -= 1 * TILE_HEIGHT;
+    } else if (IsKeyPressed(KEY_DOWN) || IsKeyPressed(KEY_S)) {
+        y += 1 * TILE_HEIGHT;
+    }
+
+    player.x = x;
+    player.y = y;
+
     float wheel = GetMouseWheelMove();
     if (wheel != 0) {
         const float zoomIncrement = 0.125f;
         camera.zoom += (wheel * zoomIncrement);
         if (camera.zoom < 3.0f) camera.zoom = 3.0f;
         if (camera.zoom > 8.0f) camera.zoom = 8.0f;
-    }
+    }  
+
     camera.target = (Vector2) { player.x, player.y };
 }
 
@@ -77,17 +112,34 @@ void GameRender() {
     //Enables game to use camera settings defined
     BeginMode2D(camera);
     sTile tile;
-    int textureIndex_x = 0;
-    int textureIndex_y = 0;
+    sTile texture_tile;
 
     for (int i = 0; i < WORLD_WIDTH; i++) {
         for (int j = 0; j < WORLD_HEIGHT; j++) {
             tile = world[i][j];
 
-            textureIndex_x = 4;
-            textureIndex_y = 4;
+            switch (tile.type) {
+                case TILE_DIRT:
+                    texture_tile = (sTile) {
+                        .x = 4,
+                        .y = 4
+                    };
+                    break;
+                case TILE_GRASS:
+                    texture_tile = (sTile) {
+                        .x = 5,
+                        .y = 4
+                    };
+                    break;
+                case TILE_TREE: 
+                    texture_tile = (sTile) {
+                        .x = 5,
+                        .y = 5
+                    };
+                    break;
+            }
 
-            DrawTile(tile.x * TILE_WIDTH, tile.y * TILE_HEIGHT, textureIndex_x, textureIndex_y);
+            DrawTile(tile.x * TILE_WIDTH, tile.y * TILE_HEIGHT, texture_tile.x, texture_tile.y);
         }
     }
     DrawTile(camera.target.x, camera.target.y, playerTexture.x, playerTexture.y);
