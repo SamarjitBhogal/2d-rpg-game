@@ -11,9 +11,13 @@
 #define PLAYER_TEXTURE_Y 0
 #define DUNGEON_TEXTURE_X 8
 #define DUNGEON_TEXTURE_Y 9
+#define ORC_TEXTURE_X 11
+#define ORC_TEXTURE_Y 0
 
 #define PLAYER_START_X 3
 #define PLAYER_START_Y 3
+#define ORC_START_X 5
+#define ORC_START_Y 5
 
 #define DUNGEON_GATE_X 10
 #define DUNGEON_GATE_Y 10
@@ -32,6 +36,12 @@ typedef enum {
     TILE_STONE,
 } tile_type;
 
+typedef enum {
+    ZONE_ALL = 0,
+    ZONE_WORLD,
+    ZONE_DUN
+} zone;
+
 typedef struct {
     int x;
     int y;
@@ -41,6 +51,7 @@ typedef struct {
 typedef struct {
     int x;
     int y;
+    zone zone;
 } sEntity;
 
 Texture2D textures[MAX_TEXTURES];
@@ -49,6 +60,7 @@ sTile dungeon[WORLD_WIDTH][WORLD_HEIGHT];
 
 sEntity player;
 sEntity dun_gate;
+sEntity orc;
 
 Camera2D camera = {};
 
@@ -83,12 +95,20 @@ void GameStartup() {
 
     player = (sEntity) {
         .x = TILE_WIDTH * PLAYER_START_X,
-        .y = TILE_HEIGHT * PLAYER_START_Y
+        .y = TILE_HEIGHT * PLAYER_START_Y,
+        .zone = ZONE_WORLD
     };
 
     dun_gate = (sEntity) {
         .x = TILE_WIDTH * DUNGEON_GATE_X,
-        .y = TILE_HEIGHT * DUNGEON_GATE_Y
+        .y = TILE_HEIGHT * DUNGEON_GATE_Y,
+        .zone = ZONE_ALL
+    };
+
+    orc = (sEntity) {
+        .x = TILE_WIDTH * ORC_START_X,
+        .y = TILE_HEIGHT * ORC_START_Y,
+        .zone = ZONE_DUN
     };
 
     camera.target = (Vector2) { player.x, player.y };
@@ -126,9 +146,15 @@ void GameUpdate() {
 
     if (IsKeyPressed(KEY_E)) {
         if (player.x == dun_gate.x && player.y == dun_gate.y) {
-            
+            if (player.zone == ZONE_WORLD) {
+                player.zone = ZONE_DUN;
+            } else if (player.zone == ZONE_DUN) {
+                player.zone = ZONE_WORLD;
+            }
         }
     }
+
+    
 }
 
 void GameRender() {
@@ -139,7 +165,11 @@ void GameRender() {
 
     for (int i = 0; i < WORLD_WIDTH; i++) {
         for (int j = 0; j < WORLD_HEIGHT; j++) {
-            tile = world[i][j];
+            if (player.zone == ZONE_WORLD) {
+                tile = world[i][j];
+            } else if (player.zone == ZONE_DUN) {
+                tile = dungeon[i][j];
+            }             
 
             switch (tile.type) {
                 case TILE_DIRT:
@@ -167,6 +197,10 @@ void GameRender() {
     }    
     //render dungeon gate
     DrawTile(dun_gate.x, dun_gate.y, DUNGEON_TEXTURE_X, DUNGEON_TEXTURE_Y);
+    //render orc
+    if (orc.zone == player.zone) {
+        DrawTile(orc.x, orc.y, ORC_TEXTURE_X, ORC_TEXTURE_Y);
+    }
     //render player
     DrawTile(camera.target.x, camera.target.y, PLAYER_TEXTURE_X, PLAYER_TEXTURE_Y);
 
