@@ -77,6 +77,7 @@ void GameUpdate();
 void GameRender();
 void GameShutdown();
 void DrawTile(int x_pos, int y_pos, int texture_tile_x, int texture_tile_y);
+bool IsInBounds(int x, int y);
 
 void GameStartup() {
     InitAudioDevice();
@@ -139,13 +140,13 @@ void GameUpdate() {
     float x = player.x;
     float y = player.y;
     if (IsKeyPressed(KEY_LEFT) || IsKeyPressed(KEY_A)) {        
-        x -= 1 * TILE_WIDTH;
+        if (IsInBounds(x - (1 * TILE_WIDTH), y)) x -= 1 * TILE_WIDTH;
     } else if (IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_D)) {
-        x += 1 * TILE_WIDTH;
+        if (IsInBounds(x + (1 * TILE_WIDTH), y)) x += 1 * TILE_WIDTH;
     } else if (IsKeyPressed(KEY_UP) || IsKeyPressed(KEY_W)) {
-        y -= 1 * TILE_HEIGHT;
+        if (IsInBounds(x, y - (1 * TILE_HEIGHT))) y -= 1 * TILE_HEIGHT;
     } else if (IsKeyPressed(KEY_DOWN) || IsKeyPressed(KEY_S)) {
-        y += 1 * TILE_HEIGHT;
+        if (IsInBounds(x, y + (1 * TILE_HEIGHT))) y += 1 * TILE_HEIGHT;
     }
 
     float wheel = GetMouseWheelMove();
@@ -251,7 +252,7 @@ void GameRender() {
 
     DrawText(TextFormat("Camera Target: (%06.2f, %06.2f)", camera.target.x, camera.target.y), 15, 10, 14, YELLOW);
     DrawText(TextFormat("Camera Zoom: %06.2f", camera.zoom), 15, 30, 14, YELLOW);
-    DrawText(TextFormat("Player Health: %d", player.health), 15, 50, 14, YELLOW);
+    DrawText(TextFormat("Player Position: %d, %d", player.x, player.y), 15, 50, 14, YELLOW);
     DrawText(TextFormat("Player Money: %d", player.money), 15, 70, 14, YELLOW);
     DrawText(TextFormat("Player XP: %d", player.xp), 15, 90, 14, YELLOW);
 
@@ -289,6 +290,13 @@ void DrawTile(int x_pos, int y_pos, int texture_tile_x, int texture_tile_y) {
         origin,
         0.0f, 
         WHITE);
+}
+
+bool IsInBounds(int x, int y) {
+    return x >= 0 
+        && x <= (int) (WORLD_WIDTH - 1) * TILE_WIDTH 
+        && y >= 0 
+        && y <= (int) (WORLD_HEIGHT - 1) * TILE_HEIGHT;
 }
 
 int main() {
